@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 
-const API = "http://localhost:3001"
-const WS = "ws://localhost:3001"
+const API = "https://live-photo.onrender.com"
+const WS = "wss://live-photo.onrender.com"
 
 function EventView({ eventId }) {
   const [mode, setMode] = useState(null)

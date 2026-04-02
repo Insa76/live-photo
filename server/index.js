@@ -139,7 +139,7 @@ app.get("/event/:id", (req, res) => {
 app.get("/qr/:eventId", async (req, res) => {
   const eventId = req.params.eventId
 
-  const url = `http://TU-IP:5174/event/${eventId}`
+  const url = `http://live-photo-ruby.vercel.app:5174/event/${eventId}`
 
   const qr = await QRCode.toDataURL(url)
 
