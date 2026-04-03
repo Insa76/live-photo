@@ -52,7 +52,9 @@ const broadcast = (data) => {
 // Watcher (AUTOMÁTICO)
 chokidar.watch("../fotos").on("add", (filePath) => {
   const fileName = path.basename(filePath)
-  const url = `http://localhost:${PORT}/uploads/${fileName}`
+  const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`
+
+  const url = `${BASE_URL}/uploads/${fileName}`
 
   photos.unshift(url)
 
