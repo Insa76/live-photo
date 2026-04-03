@@ -1,7 +1,9 @@
 import { useState } from "react"
 import axios from "axios"
 
-const API = "http://localhost:3001"
+// 🔥 usa variables de entorno (clave)
+const API = import.meta.env.VITE_API_URL
+const FRONTEND_URL = window.location.origin
 
 function Dashboard() {
   const [event, setEvent] = useState(null)
@@ -66,9 +68,11 @@ function Dashboard() {
 
           <p style={{ marginTop: "10px" }}>Link:</p>
 
+          {/* 🔥 IMPORTANTE: sin localhost */}
           <a
-            href={`http://localhost:5174/event/${event}`}
+            href={`${FRONTEND_URL}/event/${event}`}
             target="_blank"
+            rel="noreferrer"
           >
             Abrir evento
           </a>
