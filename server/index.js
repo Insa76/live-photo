@@ -4,6 +4,7 @@ import cors from "cors"
 import chokidar from "chokidar"
 import path from "path"
 import QRCode from "qrcode"
+import multer from "multer"
 import { WebSocketServer } from "ws"
 
 dotenv.config()
@@ -18,10 +19,23 @@ let photos = []
 let users = {}
 let events = {}
 
-console.log("🔥Hola ESTE ES EL BACKEND CORRECTO")
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/")
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname)
+    const name = Date.now() + ext
+    cb(null, name)
+  }
+})
+
+const upload = multer({ storage })
+
+
 
 // Servir imágenes
-app.use("/uploads", express.static(path.resolve("../fotos")))
+app.use("/uploads", express.static(path.resolve("uploads")))
 
 // API REST
 app.get("/photos", (req, res) => {
@@ -29,7 +43,7 @@ app.get("/photos", (req, res) => {
 })
 
 app.get("/qr", async (req, res) => {
-  const url = "http://TU-IP:5174"
+  const url = "http://TU-IP:5175"
   const qr = await QRCode.toDataURL(url)
   res.json({ qr })
 })
@@ -151,4 +165,25 @@ app.get("/qr/:eventId", async (req, res) => {
   const qr = await QRCode.toDataURL(url)
 
   res.json({ qr })
+})
+
+app.post("/upload", upload.array("photos"), (req, res) => {
+  const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`
+
+  const files = req.files
+
+  files.forEach(file => {
+    const url = `${BASE_URL}/uploads/${file.filename}`
+
+    console.log("📸 URL GENERADA:", url)
+
+    photos.unshift(url)
+
+    broadcast({
+      type: "new_photo",
+      url
+    })
+  })
+
+  res.json({ ok: true })
 })

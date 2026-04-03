@@ -5,6 +5,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,       // 🔥 CLAVE
-    port: 5174
+    port: 5175
   }
 })

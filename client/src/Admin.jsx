@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
 
-const API = "http://localhost:3001"
+const API = import.meta.env.VITE_API_URL
 
 function Admin() {
   const [photos, setPhotos] = useState([])
   const [users, setUsers] = useState({})
+  const [uploading, setUploading] = useState(false)
 
   useEffect(() => {
     load()
@@ -15,11 +16,15 @@ function Admin() {
   }, [])
 
   const load = async () => {
-    const p = await axios.get(`${API}/photos`)
-    const u = await axios.get(`${API}/users`)
+    try {
+      const p = await axios.get(`${API}/photos`)
+      //const u = await axios.get(`${API}/users`)
 
-    setPhotos(p.data)
-    setUsers(u.data)
+      setPhotos(p.data)
+      //setUsers(u.data)
+    } catch (err) {
+      console.error(err)
+    }
   }
 
   const assign = async (photo, userId) => {
@@ -29,9 +34,42 @@ function Admin() {
     })
   }
 
+  // 🔥 DRAG & DROP
+  const handleDrop = async (e) => {
+    e.preventDefault()
+
+    const files = e.dataTransfer.files
+    const formData = new FormData()
+
+    for (let i = 0; i < files.length; i++) {
+      formData.append("photos", files[i])
+    }
+
+    setUploading(true)
+
+    try {
+      await axios.post(`${API}/upload`, formData)
+    } catch (err) {
+      console.error(err)
+    }
+
+    setUploading(false)
+  }
+
   return (
-    <div style={styles.container}>
+    <div
+      style={styles.container}
+      onDrop={handleDrop}
+      onDragOver={(e) => e.preventDefault()}
+    >
       <h1>📸 Panel Fotógrafo</h1>
+
+      {/* 🔥 ZONA DE SUBIDA */}
+      <div style={styles.uploadBox}>
+        {uploading
+          ? "Subiendo fotos..."
+          : "Arrastrá fotos acá"}
+      </div>
 
       <h2>Usuarios</h2>
       <div style={styles.users}>
@@ -74,6 +112,15 @@ const styles = {
     color: "white",
     minHeight: "100vh",
     fontFamily: "sans-serif"
+  },
+
+  uploadBox: {
+    marginBottom: "20px",
+    padding: "40px",
+    border: "2px dashed #22c55e",
+    borderRadius: "15px",
+    textAlign: "center",
+    fontSize: "18px"
   },
 
   users: {
