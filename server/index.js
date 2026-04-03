@@ -1,3 +1,4 @@
+import dotenv from "dotenv"
 import express from "express"
 import cors from "cors"
 import chokidar from "chokidar"
@@ -5,11 +6,13 @@ import path from "path"
 import QRCode from "qrcode"
 import { WebSocketServer } from "ws"
 
+dotenv.config()
+
 const app = express()
 app.use(cors())
 app.use(express.json())
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 let photos = []
 let users = {}
@@ -112,6 +115,7 @@ app.post("/assign", (req, res) => {
 })
 
 app.post("/event", (req, res) => {
+  console.log("🧠 EVENTS ACTUALES:", events)
   try {
     console.log("BODY:", req.body)
 
@@ -133,13 +137,14 @@ app.post("/event", (req, res) => {
 })
 
 app.get("/event/:id", (req, res) => {
+  console.log("🧠 EVENTS ACTUALES:", events)
   res.json(events[req.params.id])
 })
 
 app.get("/qr/:eventId", async (req, res) => {
   const eventId = req.params.eventId
 
-  const url = `http://live-photo-ruby.vercel.app:5174/event/${eventId}`
+  const url = `${process.env.FRONTEND_URL}/event/${eventId}`
 
   const qr = await QRCode.toDataURL(url)
 
