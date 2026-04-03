@@ -1,13 +1,18 @@
 import dotenv from "dotenv"
 import express from "express"
 import cors from "cors"
-import chokidar from "chokidar"
 import path from "path"
 import QRCode from "qrcode"
 import multer from "multer"
+import { fileURLToPath } from "url"
 import { WebSocketServer } from "ws"
+import fs from "fs"
 
 dotenv.config()
+
+// 🔥 FIX IMPORTANTE (antes de usar __dirname)
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 const app = express()
 app.use(cors())
@@ -19,9 +24,16 @@ let photos = []
 let users = {}
 let events = {}
 
+// 📂 PATH ABSOLUTO
+const uploadsPath = path.join(__dirname, "uploads")
+
+console.log("DIRNAME:", __dirname)
+console.log("UPLOADS PATH:", uploadsPath)
+
+// 🔥 MULTER BIEN CONFIGURADO
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/")
+    cb(null, uploadsPath)
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname)
@@ -32,23 +44,29 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
+// 🔥 SERVIR IMÁGENES (CLAVE)
+app.use("/uploads", express.static(uploadsPath))
 
+// 🧪 TEST OPCIONAL
+app.get("/test-img", (req, res) => {
+  const files = fs.readdirSync(uploadsPath)
+  if (files.length === 0) return res.send("No hay imágenes")
 
-// Servir imágenes
-app.use("/uploads", express.static(path.resolve("uploads")))
+  res.sendFile(path.join(uploadsPath, files[0]))
+})
 
-// API REST
+// API
 app.get("/photos", (req, res) => {
   res.json(photos)
 })
 
 app.get("/qr", async (req, res) => {
-  const url = "http://TU-IP:5175"
+  const url = process.env.FRONTEND_URL || "http://localhost:5173"
   const qr = await QRCode.toDataURL(url)
   res.json({ qr })
 })
 
-// WebSocket
+// SERVER + WS
 const server = app.listen(PORT, () => {
   console.log(`🚀 Server en http://localhost:${PORT}`)
 })
@@ -63,7 +81,8 @@ const broadcast = (data) => {
   })
 }
 
-// Watcher (AUTOMÁTICO)
+// ⚠️ DESACTIVADO POR AHORA (evita conflictos)
+/*
 chokidar.watch("../fotos").on("add", (filePath) => {
   const fileName = path.basename(filePath)
   const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`
@@ -72,46 +91,24 @@ chokidar.watch("../fotos").on("add", (filePath) => {
 
   photos.unshift(url)
 
-  console.log("📸 Nueva foto:", fileName)
-
   broadcast({
     type: "new_photo",
     url
   })
 })
-
-const groupByMoment = (photos) => {
-  const groups = {}
-
-  photos.forEach((url) => {
-    const time = "Momento actual" // simplificado (luego mejoramos)
-
-    if (!groups[time]) groups[time] = []
-    groups[time].push(url)
-  })
-
-  return groups
-}
-
-app.get("/moments", (req, res) => {
-  res.json(groupByMoment(photos))
-})
+*/
 
 app.post("/user", (req, res) => {
   const { name } = req.body
   const id = Date.now().toString()
 
-  users[id] = {
-    name,
-    photos: []
-  }
+  users[id] = { name, photos: [] }
 
   res.json({ id })
 })
 
 app.get("/user/:id/photos", (req, res) => {
-  const user = users[req.params.id]
-  res.json(user?.photos || [])
+  res.json(users[req.params.id]?.photos || [])
 })
 
 app.post("/assign", (req, res) => {
@@ -131,48 +128,35 @@ app.post("/assign", (req, res) => {
 })
 
 app.post("/event", (req, res) => {
-  console.log("🧠 EVENTS ACTUALES:", events)
-  try {
-    console.log("BODY:", req.body)
+  const mode = req.body?.mode
 
-    const mode = req.body?.mode
-
-    if (!mode) {
-      return res.status(400).json({ error: "mode requerido" })
-    }
-
-    const id = Date.now().toString()
-
-    events[id] = { mode }
-
-    res.json({ id })
-  } catch (err) {
-    console.error("ERROR /event:", err)
-    res.status(500).json({ error: err.message })
+  if (!mode) {
+    return res.status(400).json({ error: "mode requerido" })
   }
+
+  const id = Date.now().toString()
+  events[id] = { mode }
+
+  res.json({ id })
 })
 
 app.get("/event/:id", (req, res) => {
-  console.log("🧠 EVENTS ACTUALES:", events)
   res.json(events[req.params.id])
 })
 
 app.get("/qr/:eventId", async (req, res) => {
   const eventId = req.params.eventId
-
   const url = `${process.env.FRONTEND_URL}/event/${eventId}`
-
   const qr = await QRCode.toDataURL(url)
 
   res.json({ qr })
 })
 
+// 📸 UPLOAD (CLAVE)
 app.post("/upload", upload.array("photos"), (req, res) => {
   const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`
 
-  const files = req.files
-
-  files.forEach(file => {
+  req.files.forEach(file => {
     const url = `${BASE_URL}/uploads/${file.filename}`
 
     console.log("📸 URL GENERADA:", url)
@@ -186,4 +170,16 @@ app.post("/upload", upload.array("photos"), (req, res) => {
   })
 
   res.json({ ok: true })
+})
+
+app.get("/uploads/:file", (req, res) => {
+  const filePath = path.join(uploadsPath, req.params.file)
+
+  console.log("BUSCANDO:", filePath)
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).send("No existe")
+  }
+
+  res.sendFile(filePath)
 })
