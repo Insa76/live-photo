@@ -28,7 +28,7 @@ cloudinary.config({
 
 const PORT = process.env.PORT || 3001
 
-let photos = []
+let photosByEvent = {}
 let users = {}
 let events = {}
 
@@ -61,8 +61,10 @@ app.get("/test-img", (req, res) => {
 })
 
 // API
-app.get("/photos", (req, res) => {
-  res.json(photos)
+app.get("/photos/:eventId", (req, res) => {
+  const { eventId } = req.params
+
+  res.json(photosByEvent[eventId] || [])
 })
 
 app.get("/qr", async (req, res) => {
@@ -142,6 +144,9 @@ app.post("/event", (req, res) => {
   const id = Date.now().toString()
   events[id] = { mode }
 
+   // 👇 inicializar fotos del evento
+  photosByEvent[id] = []
+
   res.json({ id })
 })
 
@@ -159,17 +164,20 @@ app.get("/qr/:eventId", async (req, res) => {
 
 // 📸 UPLOAD (CLAVE)
 app.post("/upload", upload.array("photos"), (req, res) => {
-  const files = req.files
+  const { eventId } = req.body
 
-  files.forEach(file => {
-    const url = file.path // 👈 URL REAL DE CLOUDINARY
+  if (!photosByEvent[eventId]) {
+    photosByEvent[eventId] = []
+  }
 
-    console.log("☁️ CLOUD URL:", url)
+  req.files.forEach(file => {
+    const url = file.path // cloudinary
 
-    photos.unshift(url)
+    photosByEvent[eventId].unshift(url)
 
     broadcast({
       type: "new_photo",
+      eventId,
       url
     })
   })

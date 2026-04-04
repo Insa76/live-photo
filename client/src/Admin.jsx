@@ -1,40 +1,45 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { UploadCloud } from "lucide-react"
 
 const API = import.meta.env.VITE_API_URL
+const WS = import.meta.env.VITE_WS_URL
 
 function Admin() {
   const [photos, setPhotos] = useState([])
-  const [users, setUsers] = useState({})
   const [uploading, setUploading] = useState(false)
 
+  // 🔥 obtener eventId UNA SOLA VEZ
+  const params = new URLSearchParams(window.location.search)
+  const eventId = params.get("event")
+
+  // 🚀 CARGA INICIAL
   useEffect(() => {
-    load()
+    if (!eventId) return
 
-    const interval = setInterval(load, 2000)
-    return () => clearInterval(interval)
-  }, [])
+    axios.get(`${API}/photos/${eventId}`)
+      .then(res => setPhotos(res.data))
+      .catch(() => setPhotos([]))
+  }, [eventId])
 
-  const load = async () => {
-    try {
-      const p = await axios.get(`${API}/photos`)
-      //const u = await axios.get(`${API}/users`)
+  // 🚀 TIEMPO REAL (WebSocket)
+  useEffect(() => {
+    if (!eventId) return
 
-      setPhotos(p.data)
-      //setUsers(u.data)
-    } catch (err) {
-      console.error(err)
+    const ws = new WebSocket(WS)
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+
+      if (data.type === "new_photo" && data.eventId === eventId) {
+        setPhotos(prev => [data.url, ...prev])
+      }
     }
-  }
 
-  const assign = async (photo, userId) => {
-    await axios.post(`${API}/assign`, {
-      userId,
-      photo
-    })
-  }
+    return () => ws.close()
+  }, [eventId])
 
-  // 🔥 DRAG & DROP
+  // 📸 DRAG & DROP
   const handleDrop = async (e) => {
     e.preventDefault()
 
@@ -45,9 +50,13 @@ function Admin() {
       formData.append("photos", files[i])
     }
 
+    formData.append("eventId", eventId)
+
     setUploading(true)
 
     try {
+      console.log("SUBIENDO A EVENTO:", eventId)
+
       await axios.post(`${API}/upload`, formData)
     } catch (err) {
       console.error(err)
@@ -62,7 +71,13 @@ function Admin() {
       onDrop={handleDrop}
       onDragOver={(e) => e.preventDefault()}
     >
-      <h1>📸 Panel Fotógrafo</h1>
+      <h1>
+        <UploadCloud size={28} /> Subir Fotos
+      </h1>
+
+      <p style={{ opacity: 0.7 }}>
+        Evento: {eventId || "No definido"}
+      </p>
 
       {/* 🔥 ZONA DE SUBIDA */}
       <div style={styles.uploadBox}>
@@ -71,38 +86,23 @@ function Admin() {
           : "Arrastrá fotos acá"}
       </div>
 
-      <h2>Usuarios</h2>
-      <div style={styles.users}>
-        {Object.entries(users).map(([id, u]) => (
-          <div key={id} style={styles.user}>
-            {u.name}
-          </div>
-        ))}
-      </div>
-
-      <h2>Fotos</h2>
+      <h2>Fotos del evento</h2>
 
       <div style={styles.grid}>
         {photos.length === 0 && (
-  <p style={{ color: "white" }}>NO HAY FOTOS</p>
-)}
+          <p style={{ opacity: 0.6 }}>
+            Todavía no hay fotos 📸
+          </p>
+        )}
 
-{photos.map((p, i) => {
-  console.log("RENDER IMG:", p)
-
-  return (
-    <img
-      key={i}
-      src={p}
-      style={{
-        width: "200px",
-        border: "2px solid red",
-        margin: "10px"
-      }}
-      onError={() => console.log("ERROR IMG:", p)}
-    />
-  )
-})}
+        {photos.map((p, i) => (
+          <img
+            key={i}
+            src={p}
+            style={styles.image}
+            onError={() => console.log("ERROR IMG:", p)}
+          />
+        ))}
       </div>
     </div>
   )
@@ -126,51 +126,17 @@ const styles = {
     fontSize: "18px"
   },
 
-  users: {
-    display: "flex",
-    gap: "10px",
-    marginBottom: "20px",
-    flexWrap: "wrap"
-  },
-
-  user: {
-    background: "#1e293b",
-    padding: "8px 12px",
-    borderRadius: "8px"
-  },
-
   grid: {
+    marginTop: "20px",
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))",
     gap: "12px"
-  },
-
-  card: {
-    position: "relative"
   },
 
   image: {
     width: "100%",
-    borderRadius: "10px"
-  },
-
-  actions: {
-    position: "absolute",
-    bottom: "5px",
-    left: "5px",
-    right: "5px",
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "5px"
-  },
-
-  btn: {
-    background: "#22c55e",
-    border: "none",
-    padding: "5px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "12px"
+    borderRadius: "10px",
+    objectFit: "cover"
   }
 }
 

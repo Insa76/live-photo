@@ -1,5 +1,6 @@
 import { useState } from "react"
 import axios from "axios"
+import { Camera, Globe, User, QrCode,  UploadCloud } from "lucide-react"
 
 // 🔥 usa variables de entorno (clave)
 const API = import.meta.env.VITE_API_URL
@@ -41,25 +42,21 @@ function Dashboard() {
 
   return (
     <div style={styles.container}>
-      <h1>🎛️ Crear Evento</h1>
-
-      <p>Elegí el tipo de experiencia</p>
+      <h1 style={styles.title}>
+        <Camera size={28} /> Crear Evento
+      </h1>
 
       <div style={styles.buttons}>
         <button onClick={() => create("global")} style={styles.btn}>
-          🌍 Evento Global
+          <Globe size={18} /> Evento Global
         </button>
 
         <button onClick={() => create("personal")} style={styles.btn}>
-          👤 Evento Personal
+          <User size={18} /> Evento Personal
         </button>
       </div>
 
-      {error && (
-        <p style={{ color: "red", marginTop: "20px" }}>
-          ⚠️ {error}
-        </p>
-      )}
+      {error && <p style={{ color: "red", marginTop: "20px" }}>⚠️ {error}</p>}
 
       {event && (
         <div style={styles.result}>
@@ -76,10 +73,27 @@ function Dashboard() {
           >
             Abrir evento
           </a>
+
+          <a
+            href={`/admin?event=${event}`}
+            style={{
+              display: "inline-block",
+              marginTop: "15px",
+              marginLeft: "10px",
+              padding: "10px 20px",
+              background: "#3b82f6",
+              color: "white",
+              borderRadius: "10px",
+              textDecoration: "none",
+              fontWeight: "bold",
+            }}
+          >
+            <UploadCloud size={28} />Subir fotos de este evento
+          </a>
         </div>
       )}
     </div>
-  )
+  );
 }
 
 const styles = {

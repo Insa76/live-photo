@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
+import { Sparkles, Camera } from "lucide-react"
 
 const API = import.meta.env.VITE_API_URL
 console.log("API:", API)
@@ -46,27 +47,29 @@ function EventView({ eventId }) {
   }, [eventId])
 
   // 🟢 GLOBAL
-  useEffect(() => {
-    if (mode !== "global") return
+  // 🟢 GLOBAL (MULTI EVENTO)
+useEffect(() => {
+  if (mode !== "global") return
 
-    axios.get(`${API}/photos`)
-      .then(res => setPhotos(res.data))
-      .catch(() => setPhotos([]))
+  axios.get(`${API}/photos/${eventId}`)
+    .then(res => setPhotos(res.data))
+    .catch(() => setPhotos([]))
 
-    const ws = new WebSocket(WS)
+  const ws = new WebSocket(WS)
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data)
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data)
 
-      if (data.type === "new_photo") {
-        setPhotos(prev => [data.url, ...prev])
-        setFlash(true)
-        setTimeout(() => setFlash(false), 800)
-      }
+    // 🔥 FILTRAR POR EVENTO
+    if (data.type === "new_photo" && data.eventId === eventId) {
+      setPhotos(prev => [data.url, ...prev])
+      setFlash(true)
+      setTimeout(() => setFlash(false), 800)
     }
+  }
 
-    return () => ws.close()
-  }, [mode])
+  return () => ws.close()
+}, [mode, eventId])
 
   // 🔵 PERSONAL
   useEffect(() => {
@@ -140,7 +143,11 @@ function EventView({ eventId }) {
     <div style={styles.container}>
       {flash && <div style={styles.toast}>📸 Nueva foto</div>}
 
-      <h1>✨ Evento en vivo</h1>
+      <h1 style={styles.title}>
+        <Sparkles size={28} />
+        <Camera size={28} />
+        <span>Evento en vivo</span>
+      </h1>
       {mode === "personal" && <p>Hola {name} 👋</p>}
 
       {qr && <img src={qr} style={styles.qr} />}
@@ -157,7 +164,7 @@ function EventView({ eventId }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 // 🎨 ESTILOS
