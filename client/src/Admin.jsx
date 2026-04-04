@@ -83,23 +83,26 @@ function Admin() {
       <h2>Fotos</h2>
 
       <div style={styles.grid}>
-        {photos.map((p, i) => (
-          <div key={i} style={styles.card}>
-            <img src={p} style={styles.image} />
+        {photos.length === 0 && (
+  <p style={{ color: "white" }}>NO HAY FOTOS</p>
+)}
 
-            <div style={styles.actions}>
-              {Object.entries(users).map(([id, u]) => (
-                <button
-                  key={id}
-                  onClick={() => assign(p, id)}
-                  style={styles.btn}
-                >
-                  {u.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+{photos.map((p, i) => {
+  console.log("RENDER IMG:", p)
+
+  return (
+    <img
+      key={i}
+      src={p}
+      style={{
+        width: "200px",
+        border: "2px solid red",
+        margin: "10px"
+      }}
+      onError={() => console.log("ERROR IMG:", p)}
+    />
+  )
+})}
       </div>
     </div>
   )

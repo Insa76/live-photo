@@ -7,6 +7,8 @@ import multer from "multer"
 import { fileURLToPath } from "url"
 import { WebSocketServer } from "ws"
 import fs from "fs"
+import { v2 as cloudinary } from "cloudinary"
+import { CloudinaryStorage } from "multer-storage-cloudinary"
 
 dotenv.config()
 
@@ -17,6 +19,12 @@ const __dirname = path.dirname(__filename)
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+})
 
 const PORT = process.env.PORT || 3001
 
@@ -31,14 +39,11 @@ console.log("DIRNAME:", __dirname)
 console.log("UPLOADS PATH:", uploadsPath)
 
 // 🔥 MULTER BIEN CONFIGURADO
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadsPath)
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname)
-    const name = Date.now() + ext
-    cb(null, name)
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "event-photos",
+    allowed_formats: ["jpg", "png", "jpeg"]
   }
 })
 
@@ -61,7 +66,7 @@ app.get("/photos", (req, res) => {
 })
 
 app.get("/qr", async (req, res) => {
-  const url = process.env.FRONTEND_URL || "http://localhost:5173"
+  const url = process.env.FRONTEND_URL || "http://localhost:5175"
   const qr = await QRCode.toDataURL(url)
   res.json({ qr })
 })
@@ -154,12 +159,12 @@ app.get("/qr/:eventId", async (req, res) => {
 
 // 📸 UPLOAD (CLAVE)
 app.post("/upload", upload.array("photos"), (req, res) => {
-  const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`
+  const files = req.files
 
-  req.files.forEach(file => {
-    const url = `${BASE_URL}/uploads/${file.filename}`
+  files.forEach(file => {
+    const url = file.path // 👈 URL REAL DE CLOUDINARY
 
-    console.log("📸 URL GENERADA:", url)
+    console.log("☁️ CLOUD URL:", url)
 
     photos.unshift(url)
 

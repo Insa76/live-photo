@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 
 const API = import.meta.env.VITE_API_URL
+console.log("API:", API)
 const WS = import.meta.env.VITE_WS_URL
 
 function EventView({ eventId }) {
