@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import axios from "axios"
-import { UploadCloud } from "lucide-react"
+import { UploadCloud, Camera } from "lucide-react"
 
 const API = import.meta.env.VITE_API_URL
 const WS = import.meta.env.VITE_WS_URL
@@ -91,7 +91,7 @@ function Admin() {
       <div style={styles.grid}>
         {photos.length === 0 && (
           <p style={{ opacity: 0.6 }}>
-            Todavía no hay fotos 📸
+            Todavía no hay fotos <Camera size={28} />
           </p>
         )}
 
@@ -111,7 +111,11 @@ function Admin() {
 const styles = {
   container: {
     padding: "20px",
-    background: "#0f172a",
+    //background: "#255fe6",
+    backgroundImage: "url('/C.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
     color: "white",
     minHeight: "100vh",
     fontFamily: "sans-serif"
@@ -120,7 +124,8 @@ const styles = {
   uploadBox: {
     marginBottom: "20px",
     padding: "40px",
-    border: "2px dashed #22c55e",
+    background: "#1616166e",
+    border: "2px dashed #f3f3f3",
     borderRadius: "15px",
     textAlign: "center",
     fontSize: "18px"

@@ -114,14 +114,27 @@ const styles = {
   },
 
   btn: {
-    padding: "15px 25px",
-    borderRadius: "12px",
-    border: "none",
-    background: "#22c55e",
-    color: "white",
-    fontWeight: "bold",
-    cursor: "pointer"
-  },
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  padding: "14px 22px",
+  borderRadius: "12px",
+  border: "none",
+  background: "#22c55e",
+  color: "white",
+  fontWeight: "bold",
+  cursor: "pointer"
+},
+
+title: {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "10px",
+  fontSize: "28px",
+  fontWeight: "bold",
+  marginBottom: "10px"
+},
 
   result: {
     marginTop: "30px"

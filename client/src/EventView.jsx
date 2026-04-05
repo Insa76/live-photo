@@ -154,7 +154,7 @@ useEffect(() => {
 
       {photos.length === 0 ? (
         <p style={{ marginTop: "30px", opacity: 0.6 }}>
-          Todavía no hay fotos 📸
+          Todavía no hay fotos <Camera size={28} />
         </p>
       ) : (
         <div style={styles.grid}>
@@ -171,7 +171,11 @@ useEffect(() => {
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "#0f172a",
+    //background: "#0f172a",
+    backgroundImage: "url('/C.png')",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
     color: "white",
     padding: "20px",
     fontFamily: "sans-serif"
